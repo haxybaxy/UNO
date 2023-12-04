@@ -12,7 +12,6 @@ class UnoGame:
         self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
         self.render_background('./assets/background.png')
         self.playing = 2
-
         self.clock = pygame.time.Clock()
         self.font = FONT_NAME
 
@@ -62,7 +61,7 @@ class UnoGame:
         # Logic to start the game
         self.render_background('assets/default.png')
         game = engine.engine(self.playing)
-        game.startgame()
+        game.startGame()
 
 
     def main_menu(self):

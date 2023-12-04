@@ -1,16 +1,41 @@
 import pygame
 
-class Card(pygame.sprite.Sprite):
-    def __init__(self, name, position):
-        pygame.sprite.Sprite.__init__(self)
+class BaseSprite(pygame.sprite.Sprite):
+    """ A base class for common sprite functionalities. """
+    def __init__(self, name, position, image_scale=None):
+        super().__init__()
         self.name = name
-        self.image = pygame.image.load('./assets/' + name + '.png')
-        self.image = pygame.transform.scale(self.image, (80, 100))
-        self.orig_pos = position
+        self.image = pygame.image.load(f'./assets/{name}.png')
+        if image_scale:
+            self.image = pygame.transform.scale(self.image, image_scale)
         self.position = position
-        self.user_rotation = 30
+        self.rect = self.image.get_rect(center=position)
+
+    def update_position(self, new_position):
+        self.position = new_position
+        self.rect.center = new_position
+
+    def get_name(self):
+        return self.name
+
+    def get_rect(self):
+        return self.rect
+
+    def getposition(self):
+        return self.position
+
+    def setposition(self, x, y):
+        i_x = x
+        i_y = y
+        self.position = (i_x, i_y)
         self.rect = self.image.get_rect()
         self.rect.center = self.position
+
+class Card(BaseSprite):
+    def __init__(self, name, position):
+        super().__init__(name, position, image_scale=(80, 100))
+        self.orig_pos = position
+        self.user_rotation = 30
 
     def update(self, dest_loc):
         x, y = self.position
@@ -31,18 +56,10 @@ class Card(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.center = self.position
 
+
     def rotation(self, rotate):
         self.image = pygame.transform.rotate(self.image, rotate)
-
-    def getposition(self):
-        return self.position
-
-    def setposition(self, x, y):
-        i_x = x
-        i_y = y
-        self.position = (i_x, i_y)
-        self.rect = self.image.get_rect()
-        self.rect.center = self.position
+        self.rect = self.image.get_rect(center=self.position)
 
     def move(self, compare_pos):
         x, y = self.position
@@ -62,22 +79,7 @@ class Card(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.center = self.position
 
-    def get_rect(self):
-        return self.rect
 
-    def get_name(self):
-        return self.name
-
-class Popup(pygame.sprite.Sprite):
+class Popup(BaseSprite):
     def __init__(self, name, position):
-        pygame.sprite.Sprite.__init__(self)
-        self.name = name
-        self.image = pygame.image.load('./assets/'+name+'.png')
-        self.position = position
-        self.rect = self.image.get_rect()
-        self.rect.center = self.position
-
-    def get_name(self):
-        return self.name
-    def get_rect(self):
-        return self.rect
+        super().__init__(name, position)
