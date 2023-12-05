@@ -55,7 +55,6 @@ class engine():
     def distribute_cards(self):
         self.set_deck()
         for player in range(self.playernum):
-            # self.player[player] = [self.deck_stack.pop() for _ in range(7)]
             self.player[player] = [self.deck_stack.pop() for _ in range(7)]
 
     def create_deck(self):
