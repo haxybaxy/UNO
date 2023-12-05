@@ -74,7 +74,34 @@ class engine():
             else:
                 setattr(self, f'com{i}_card', card_group)
 
-    # driver function
+    def set_window(self):
+        self.distribute_cards()
+        self.create_deck()
+        self.create_player_groups()
+
+        setting = True
+        while setting:
+            for event in pygame.event.get():
+                if event.type == QUIT:
+                    pygame.quit()
+                    sys.exit()
+
+            user_sprites = position_cards(self.user_group, (200, 500), 70)
+            self.user_group = pygame.sprite.RenderPlain(*user_sprites)
+            self.lastcard0 = user_sprites[-1].getposition()
+
+            com1_sprites = position_cards(self.com1_card, (270, 100), 40)
+            self.com1_group = pygame.sprite.RenderPlain(*com1_sprites)
+            self.lastcard1 = com1_sprites[-1].getposition()
+
+            setting = not all([
+                is_positioned(self.user_group, (200, 500), 70, len(self.user_group)),
+                is_positioned(self.com1_group, (270, 100), 40, len(self.com1_card)),
+
+            ])
+
+            self.printWindow()
+            pygame.display.update()
 
     def next_turn(self):
         # Display player info if needed
@@ -229,6 +256,7 @@ class engine():
         # Give cards to the next player
         for i in range(card_num):
             self.pop_from_deck(next_player)
+        self.printWindow()
 
     def pop_from_deck(self, now_turn):
         item = self.deck.pop(0)
@@ -245,6 +273,7 @@ class engine():
             temp.setposition(x, y)
             self.lastcard0 = (x, y)
             self.user_group.add(temp)
+            self.printWindow()
 
         elif now_turn == 1:
             temp = render.Card('BACK', (350, 300))
@@ -260,6 +289,7 @@ class engine():
             self.lastcard1 = (x, y)
             self.com1_group.add(temp)
             self.player[1].append(item)
+            self.printWindow()
 
     def render_player_names(self):
         player_info = {
@@ -307,35 +337,6 @@ class engine():
         self.waste_card.append(sprite.get_name())
         self.set_last(self.lastcard0, sprite.getposition())
         self.printWindow()
-
-    def set_window(self):
-        self.distribute_cards()
-        self.create_deck()
-        self.create_player_groups()
-
-        setting = True
-        while setting:
-            for event in pygame.event.get():
-                if event.type == QUIT:
-                    pygame.quit()
-                    sys.exit()
-
-            user_sprites = position_cards(self.user_group, (200, 500), 70)
-            self.user_group = pygame.sprite.RenderPlain(*user_sprites)
-            self.lastcard0 = user_sprites[-1].getposition()
-
-            com1_sprites = position_cards(self.com1_card, (270, 100), 40)
-            self.com1_group = pygame.sprite.RenderPlain(*com1_sprites)
-            self.lastcard1 = com1_sprites[-1].getposition()
-
-            setting = not all([
-                is_positioned(self.user_group, (200, 500), 70, len(self.user_group)),
-                is_positioned(self.com1_group, (270, 100), 40, len(self.com1_card)),
-
-            ])
-
-            self.printWindow()
-            pygame.display.update()
 
     # driver function
     def startGame(self):
