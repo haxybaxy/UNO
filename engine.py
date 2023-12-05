@@ -12,18 +12,16 @@ from collections import deque
 class engine():
     def __init__(self, playernum):
         self.lastcard0 = None
-        self.user_group = None
-        self.deck_group = None
+        self.user_hand = None
         self.playernum = playernum
         self.background = pygame.image.load('assets/default.png')
         self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
         self.screen.blit(self.background, (-100, -70))
         self.colors = {1: 'RED', 2: 'YELLOW', 3: 'GREEN', 4: 'BLUE', 5: 'BLACK'}
         self.skill = {11: '_SKILL_0', 12: '_SKILL_1', 13: '_SKILL_2', 14: '_SKILL_3', 15: '_SKILL_4'}
-        self.deck = []
+        self.deck_stack = []
         self.player = [[0] for i in range(0, self.playernum)]
         self.ground = pygame.sprite.RenderPlain()
-        self.rotate = 0
         self.now_turn = 0
         self.waste_card = []
         self.players_queue = deque(range(playernum))
@@ -31,48 +29,54 @@ class engine():
         pygame.display.update()
 
     def set_deck(self):
-        # Assuming self.color is a dictionary mapping color indices to color names
+        # Initialize the deck in a predefined order
+        predefined_deck = [] #The cards are an array while you shuffle them
+
+        # Self.color is a dictionary mapping color indices to color names
         for color_idx, color in self.colors.items():
-            if color_idx >= 1 and color_idx <= 4:  # Restrict to first four colors
+            if color_idx >= 1 and color_idx <= 4:  # Restrict to first four colors to avoid black
                 # Add zero cards
-                self.deck.append(color + '_0')
+                predefined_deck.append(color + '_0')
                 # Add two of each number card from 1 to 9
-                self.deck.extend(color + f"_{num}" for num in range(1, 10) for _ in range(2))
+                predefined_deck.extend(color + f"_{num}" for num in range(1, 10) for _ in range(2))
                 # Add two of each skill card
-                self.deck.extend(
+                predefined_deck.extend(
                     color + self.skill[card_number] for card_number in range(11, 14) for _ in range(2))
 
         # Adding black (wild and wild draw four) cards, four of each
-        self.deck.extend("BLACK" + self.skill[card_number] for card_number in range(14, 16) for _ in range(4))
+        predefined_deck.extend("BLACK" + self.skill[card_number] for card_number in range(14, 16) for _ in range(4))
 
-        # Shuffling the deck
-        random.shuffle(self.deck)
+        # Shuffle the predefined deck
+        random.shuffle(predefined_deck)
+
+        # Assign the shuffled deck to become the stack
+        self.deck_stack = predefined_deck
 
     def distribute_cards(self):
         self.set_deck()
         for player in range(self.playernum):
-            self.player[player] = [self.deck.pop() for _ in range(7)]
+            self.player[player] = [self.deck_stack.pop() for _ in range(7)]
 
     def create_deck(self):
         deck = render.Card('BACK', (350, 300))
-        self.deck_group = pygame.sprite.RenderPlain(deck)
+        self.deck_pile = pygame.sprite.RenderPlain(deck)
 
     def create_player_groups(self):
         rotations = [0, 180, 270, 90]
         for i, player_deck in enumerate(self.player):
-            card_group = []
+            cpu_hand = [] #hands of cpus
             for card_name in player_deck:
                 if i == 0:
                     card = render.Card(card_name, (400, 300))
                 else:
                     card = render.Card('BACK', (400, 300))
-                    card.rotation(rotations[i])
-                card_group.append(card)
+                    card.rotation(rotations[i]) #rotate the cards to display them properly
+                cpu_hand.append(card)
 
             if i == 0:
-                self.user_group = card_group
+                self.user_hand = cpu_hand
             else:
-                setattr(self, f'com{i}_card', card_group)
+                setattr(self, f'com{i}_card', cpu_hand)
 
     def set_window(self):
         self.distribute_cards()
@@ -86,8 +90,8 @@ class engine():
                     pygame.quit()
                     sys.exit()
 
-            user_sprites = position_cards(self.user_group, (200, 500), 70)
-            self.user_group = pygame.sprite.RenderPlain(*user_sprites)
+            user_sprites = position_cards(self.user_hand, (200, 500), 70)
+            self.user_hand = pygame.sprite.RenderPlain(*user_sprites)
             self.lastcard0 = user_sprites[-1].getposition()
 
             com1_sprites = position_cards(self.com1_card, (270, 100), 40)
@@ -95,12 +99,11 @@ class engine():
             self.lastcard1 = com1_sprites[-1].getposition()
 
             setting = not all([
-                is_positioned(self.user_group, (200, 500), 70, len(self.user_group)),
+                is_positioned(self.user_hand, (200, 500), 70, len(self.user_hand)),
                 is_positioned(self.com1_group, (270, 100), 40, len(self.com1_card)),
 
             ])
 
-            self.printWindow()
             pygame.display.update()
 
     def check_card(self, sprite):
@@ -199,7 +202,7 @@ class engine():
         return 0
 
     def pop_from_deck(self, now_turn):
-        item = self.deck.pop(0)
+        item = self.deck_stack.pop(0)
 
         if now_turn == 0:
             temp = render.Card(item, (400, 300))
@@ -212,7 +215,7 @@ class engine():
 
             temp.setposition(x, y)
             self.lastcard0 = (x, y)
-            self.user_group.add(temp)
+            self.user_hand.add(temp)
             self.printWindow()
 
         elif now_turn == 1:
@@ -299,13 +302,13 @@ class engine():
         self.screen.blit(self.background, (-100, -70))
 
         # Draw the deck, user, and computer groups
-        self.deck_group.draw(self.screen)
-        self.user_group.draw(self.screen)
+        self.deck_pile.draw(self.screen)
+        self.user_hand.draw(self.screen)
         self.com1_group.draw(self.screen)
 
         # Player information: name, group, and position
         player_info = {
-            0: ("ME", self.user_group, (165, 420)),
+            0: ("ME", self.user_hand, (165, 420)),
             1: ("CPU", self.com1_group, (235, 18)),
         }
 
@@ -342,23 +345,24 @@ class engine():
 
     # driver function
     def startGame(self):
-        self.deck.clear()
+        self.deck_stack.clear()
         self.player = [[0] for i in range(0, self.playernum)]
         self.ground = pygame.sprite.RenderPlain()
-        self.rotate = 0
+        # self.rotate = 0
         self.set_window()
+        self.printWindow()
         self.playGame()
 
     # driver function
     def playGame(self):
         while True:
             # Check for winning conditions
-            if len(self.user_group) == 0 or (self.playernum == 2 and len(self.player[1]) == 0):
+            if len(self.user_hand) == 0 or (self.playernum == 2 and len(self.player[1]) == 0):
                 self.restart()
                 return
 
             # Replenish the deck if empty
-            if len(self.deck) == 0:
+            if len(self.deck_stack) == 0:
                 self.set_deck()
 
             self.render_player_names()
@@ -395,17 +399,17 @@ class engine():
                     return
                 if event.type == MOUSEBUTTONUP and self.now_turn == 0:
                     mouse_pos = pygame.mouse.get_pos()
-                    for sprite in self.user_group:
+                    for sprite in self.user_hand:
                         if sprite.get_rect().collidepoint(mouse_pos) and self.check_card(sprite):
-                            self.user_group.remove(sprite)
-                            for temp in self.user_group:
+                            self.user_hand.remove(sprite)
+                            for temp in self.user_hand:
                                 temp.move(sprite.getposition())
                             sprite.setposition(430, 300)
                             self.put_ground(sprite)
                             self.card_skill(sprite)
                             self.now_turn = self.next_turn()  # Move to next turn
                             break
-                    for sprite in self.deck_group:
+                    for sprite in self.deck_pile:
                         if sprite.get_rect().collidepoint(mouse_pos):
                             self.pop_from_deck(self.now_turn)
                             self.now_turn = self.next_turn()  # Move to next turn
@@ -419,7 +423,7 @@ class engine():
         # Slightly lighter inner rectangle for contrast
         pygame.draw.rect(self.screen, (191, 239, 255), pygame.Rect(210, 210, 380, 180))
 
-        if len(self.user_group) == 0:
+        if len(self.user_hand) == 0:
             close_text = text_handle("You win!", FONT_NAME, 80, (0, 0, 139))  # Dark blue color
             press_text = text_handle("Press SPACE to REPLAY", FONT_NAME, 35, (0, 0, 139))  # Dark blue color
             self.screen.blit(close_text, (230, 220))
