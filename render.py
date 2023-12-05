@@ -1,6 +1,6 @@
 import pygame
 from pygame.locals import *
-class BaseSprite(pygame.sprite.Sprite):
+class BaseSprite(pygame.sprite.Sprite): #this whole file is O(1), rendering is not complicated
     """ A base class for common sprite functionalities. """
     def __init__(self, name, position, image_scale=None):
         super().__init__()

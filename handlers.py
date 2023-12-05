@@ -13,7 +13,7 @@ def text_handle(message, textFont, textSize, textColor):
     return newText
 
 
-def position_cards(card_group, start_position, offset, axis=0):
+def position_cards(card_group, start_position, offset, axis=0): #O(n) since we are iterating through every card
     positioned_cards = []
     for i, card in enumerate(card_group):
         position = list(start_position)
@@ -23,7 +23,7 @@ def position_cards(card_group, start_position, offset, axis=0):
     return positioned_cards
 
 
-def is_positioned(group, start_position, offset, count, axis=0):
+def is_positioned(group, start_position, offset, count, axis=0): #O(1)
     last_card = group.sprites()[-1].getposition()
     expected_position = list(start_position)
     expected_position[axis] += offset * (count - 1)
