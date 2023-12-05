@@ -11,7 +11,7 @@ class UnoGame:
         self.screen_width, self.screen_height = SCREEN_WIDTH, SCREEN_HEIGHT
         self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
         self.render_background('./assets/background.png')
-        self.playing = 2
+        self.playing = 3
         self.clock = pygame.time.Clock()
         self.font = FONT_NAME
 
