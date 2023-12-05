@@ -14,17 +14,14 @@ class engine():
         self.playernum = playernum #initialization of pygame variables
         self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 
-        self.background = pygame.image.load('assets/default.png')
+        self.background = pygame.image.load('assets/default.png') #Draw background
         self.screen.blit(self.background, (-100, -70))
 
-        self.colors = {1: 'RED', 2: 'YELLOW', 3: 'GREEN', 4: 'BLUE', 5: 'BLACK'}
-        self.skill = {11: '_SKILL_0', 12: '_SKILL_1', 13: '_SKILL_2', 14: '_SKILL_3', 15: '_SKILL_4'}
+        self.colors = {1: 'RED', 2: 'YELLOW', 3: 'GREEN', 4: 'BLUE', 5: 'BLACK'} #Make the deck
+        self.skill = {11: '_SKILL_0', 12: '_SKILL_1', 13: '_SKILL_2', 14: '_SKILL_3', 15: '_SKILL_4'} #Add the skill cards
 
-        # self.deck_graphic = None
-        self.deck_stack = []
-        #
-        # self.ground_graphic = pygame.sprite.RenderPlain()
-        self.ground_stack = []
+        self.deck_stack = [] #Deck is where you take new cards from
+        self.ground_stack = [] #Ground is where you throw the cards
 
         self.player = [[0] for i in range(0, self.playernum)]
         self.now_turn = 0
@@ -32,10 +29,9 @@ class engine():
         self.is_reverse = False
         pygame.display.update()
 
-    def set_deck(self):
+    def set_deck(self): #Method for making the cards, runtime is O(n), since we are iterating through every card
         predefined_deck = []  # The cards are an array while you shuffle them
 
-        # Self.color is a dictionary mapping color indices to color names
         for color_idx, color in self.colors.items():
             if color_idx >= 1 and color_idx <= 4:  # Restrict to first four colors to avoid black
                 # Add zero cards
@@ -55,27 +51,26 @@ class engine():
         # Assign the shuffled deck to become the stack
         self.deck_stack = predefined_deck
 
-    def distribute_cards(self):
+    def distribute_cards(self): #O(n) since we are iterating through the number of players
         self.set_deck()
         for player in range(self.playernum):
             self.player[player] = [self.deck_stack.pop() for _ in range(7)]
 
-    def create_deck(self):
+    def create_deck(self): #O(1) Renders take a constant amount of time always
         deck = render.Card('BACK', (350, 300))
         self.deck_graphic = pygame.sprite.RenderPlain(deck)
 
-    def create_player_hands(self):
+    def create_player_hands(self): #O(Players*Cards), rendering the player's hands
         rotations = [0, 180, 270]
         for i, player_deck in enumerate(self.player):
             temp_hand = []
             for card_name in player_deck:
                 if i == 0:
-                    card = render.Card(card_name, (400, 300))
-
+                    card = render.Card(card_name, (400, 300)) #real player's deck
                 else:
                     card = render.Card('BACK', (400, 300))
                     card.rotation(rotations[i])  # rotate the cards to display them properly
-                temp_hand.append(card)
+                temp_hand.append(card) #method renders the card then gives it to the player
 
 
             if i == 0:
@@ -83,7 +78,7 @@ class engine():
             else:
                 setattr(self, f'cpu{i}_card', temp_hand)
 
-    def setup_window(self):
+    def setup_window(self):#sets up the stage first
         self.distribute_cards()
         self.create_deck()
         self.create_player_hands()
@@ -95,25 +90,29 @@ class engine():
                     pygame.quit()
                     sys.exit()
 
-            user_sprites = position_cards(self.user_hand, (200, 500), 70)
-            self.user_hand = pygame.sprite.RenderPlain(*user_sprites)
-            self.lastcard0 = user_sprites[-1].getposition()
+            player_configs = [
+                (self.user_hand, (200, 500), 70, '0',0),
+                (self.cpu1_card, (270, 100), 40, '1',0),
+                (self.cpu2_card, (45, 100), 70, '2', 1),
+            ]
 
-            cpu1_sprites = position_cards(self.cpu1_card, (270, 100), 40)
-            self.cpu1_group = pygame.sprite.RenderPlain(*cpu1_sprites)
-            self.lastcard1 = cpu1_sprites[-1].getposition()
+            for hand, position, offset, lastcard_index, axis in player_configs:
+                sprites = position_cards(hand, position, offset, axis=axis)
+                group = pygame.sprite.RenderPlain(*sprites)
+                setattr(self, f'lastcard{lastcard_index}', sprites[-1].getposition())
 
-
-            cpu2_sprites = position_cards(self.cpu2_card, (45, 100), 70, axis=1)  # Update these coordinates as needed
-            self.cpu2_group = pygame.sprite.RenderPlain(*cpu2_sprites)
-            self.lastcard2 = cpu2_sprites[-1].getposition()
+                if lastcard_index == '0':
+                    self.user_hand = group
+                elif lastcard_index == '1':
+                    self.cpu1_group = group
+                else:  # '2'
+                    self.cpu2_group = group
 
             booting = not all([
                 is_positioned(self.user_hand, (200, 500), 70, len(self.user_hand)),
                 is_positioned(self.cpu1_group, (270, 100), 40, len(self.cpu1_card)),
                 is_positioned(self.cpu2_group, (45, 100), 70, len(self.cpu2_card), axis=1),
-
-                ])
+            ])
             pygame.display.update()
     def check_card(self, sprite):
         if len(self.ground_stack) == 0:
