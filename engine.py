@@ -100,7 +100,7 @@ class engine():
             self.cpu1_group = pygame.sprite.RenderPlain(*cpu1_sprites)
             self.lastcard1 = cpu1_sprites[-1].getposition()
 
-            cpu2_sprites = position_cards(self.cpu2_card, (45, 100), 70)  # Update these coordinates as needed
+            cpu2_sprites = position_cards(self.cpu2_card, (45, 100), 70, axis=1)  # Update these coordinates as needed
             self.cpu2_group = pygame.sprite.RenderPlain(*cpu2_sprites)
             self.lastcard2 = cpu2_sprites[-1].getposition()
 
@@ -108,7 +108,7 @@ class engine():
             booting = not all([
                 is_positioned(self.user_hand, (200, 500), 70, len(self.user_hand)),
                 is_positioned(self.cpu1_group, (270, 100), 40, len(self.cpu1_card)),
-                is_positioned(self.cpu2_group, (45, 100), 70, len(self.cpu2_card)),
+                is_positioned(self.cpu2_group, (45, 100), 70, len(self.cpu2_card), axis=1),
 
             ])
             pygame.display.update()
