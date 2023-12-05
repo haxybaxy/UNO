@@ -52,15 +52,6 @@ class engine():
         # Assign the shuffled deck to become the stack
         self.deck_stack = predefined_deck
 
-    def sort_hand(player_hand):
-        # Define the order for colors
-        color_order = {'RED': 1, 'YELLOW': 2, 'GREEN': 3, 'BLUE': 4, 'BLACK': 5}
-
-        # Custom sorting function: sorts by color first, then by number
-        player_hand.sort(key=lambda card: (color_order[card.split('_')[0]],
-                                           int(card.split('_')[1]) if card.split('_')[1].isdigit() else float('inf')))
-
-        return player_hand
     def distribute_cards(self):
         self.set_deck()
         for player in range(self.playernum):
