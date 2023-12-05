@@ -23,14 +23,14 @@ class engine():
         self.player = [[0] for i in range(0, self.playernum)]
         self.ground = pygame.sprite.RenderPlain()
         self.now_turn = 0
-        self.waste_card = []
+        self.ground_stack = []
         self.players_queue = deque(range(playernum))
         self.is_reverse = False
         pygame.display.update()
 
     def set_deck(self):
         # Initialize the deck in a predefined order
-        predefined_deck = [] #The cards are an array while you shuffle them
+        predefined_deck = []  # The cards are an array while you shuffle them
 
         # Self.color is a dictionary mapping color indices to color names
         for color_idx, color in self.colors.items():
@@ -64,13 +64,13 @@ class engine():
     def create_player_groups(self):
         rotations = [0, 180, 270, 90]
         for i, player_deck in enumerate(self.player):
-            cpu_hand = [] #hands of cpus
+            cpu_hand = []  # hands of cpus
             for card_name in player_deck:
                 if i == 0:
                     card = render.Card(card_name, (400, 300))
                 else:
                     card = render.Card('BACK', (400, 300))
-                    card.rotation(rotations[i]) #rotate the cards to display them properly
+                    card.rotation(rotations[i])  # rotate the cards to display them properly
                 cpu_hand.append(card)
 
             if i == 0:
@@ -103,16 +103,15 @@ class engine():
                 is_positioned(self.com1_group, (270, 100), 40, len(self.com1_card)),
 
             ])
-
             pygame.display.update()
 
     def check_card(self, sprite):
-        if len(self.waste_card) == 0:
+        if len(self.ground_stack) == 0:
             return True
         else:
             name = sprite.get_name()
             name = name.split('_')
-            w_name = self.waste_card[-1]
+            w_name = self.ground_stack[-1]
             w_name = w_name.split('_')
             if w_name[0] == 'BLACK': return True
             if name[0] == 'BLACK': return True
@@ -155,8 +154,7 @@ class engine():
                     self.most_num_color(self.player[1])
         return True
 
-
-    def most_num_color(self, card_deck):
+    def most_num_color(self, card_deck): #move to cpu soon
         color_counts = {'RED': 0, 'YELLOW': 0, 'GREEN': 0, 'BLUE': 0}
 
         for item in card_deck:
@@ -166,9 +164,8 @@ class engine():
 
         most_common_color = max(color_counts, key=color_counts.get)
         temp = render.Card(most_common_color, (430, 300))
-        self.waste_card.append(most_common_color)
+        self.ground_stack.append(most_common_color)
         self.ground.add(temp)
-        self.printWindow()
 
     def pick_color(self):
         color_popup = render.Popup('pickcolor', (400, 300))
@@ -195,7 +192,7 @@ class engine():
                         if sprite.get_rect().collidepoint(mouse_pos):
                             temp_name = sprite.get_name()
                             temp = render.Card(temp_name, (430, 300))
-                            self.waste_card.append(temp_name)
+                            self.ground_stack.append(temp_name)
                             self.ground.add(temp)
                             self.printWindow()
                             loop = False
@@ -216,7 +213,7 @@ class engine():
             temp.setposition(x, y)
             self.lastcard0 = (x, y)
             self.user_hand.add(temp)
-            self.printWindow()
+            # self.printWindow()
 
         elif now_turn == 1:
             temp = render.Card('BACK', (350, 300))
@@ -232,7 +229,7 @@ class engine():
             self.lastcard1 = (x, y)
             self.com1_group.add(temp)
             self.player[1].append(item)
-            self.printWindow()
+            # self.printWindow()
 
     def set_last(self, lastcard, compare_pos):
         x, y = lastcard
@@ -259,9 +256,8 @@ class engine():
 
     def put_ground(self, sprite):
         self.ground.add(sprite)
-        self.waste_card.append(sprite.get_name())
+        self.ground_stack.append(sprite.get_name())
         self.set_last(self.lastcard0, sprite.getposition())
-        self.printWindow()
 
     def next_turn(self):
         # Display player info if needed
@@ -273,7 +269,7 @@ class engine():
         current_player = self.players_queue[0]
         if current_player in player_info:
             player_name, position = player_info[current_player]
-            text = render.text_handle(player_name, FONT_NAME, 30, (0, 0, 0))
+            text = render.text_handle(player_name, FONT_NAME, 30, (255, 242, 0))
             self.screen.blit(text, position)
 
         # Move to the next player
@@ -324,7 +320,6 @@ class engine():
         # Update the display
         pygame.display.update()
 
-
     def render_player_names(self):
         player_info = {
             0: ("ME", (165, 420)),
@@ -340,6 +335,7 @@ class engine():
             else:
                 color = (255, 255, 255)  # Normal color for other players
 
+
             text = render.text_handle(name, FONT_NAME, 30, color)
             self.screen.blit(text, position)
 
@@ -348,7 +344,6 @@ class engine():
         self.deck_stack.clear()
         self.player = [[0] for i in range(0, self.playernum)]
         self.ground = pygame.sprite.RenderPlain()
-        # self.rotate = 0
         self.set_window()
         self.printWindow()
         self.playGame()
@@ -365,23 +360,24 @@ class engine():
             if len(self.deck_stack) == 0:
                 self.set_deck()
 
-            self.render_player_names()
+            # self.render_player_names()
 
             # AI's turn
             if self.now_turn == 1:
                 pygame.time.wait(700)
-                ai = CPU.AI(2, self.player[1], self.waste_card)
+                ai = CPU.AI(2, self.player[1], self.ground_stack)
                 temp = ai.cpuplay()
 
                 if temp == 0 or temp is None:
                     self.pop_from_deck(1)
+                    self.printWindow()
                 else:
                     for sprite in self.com1_group:
                         if sprite.getposition() == self.lastcard1:
                             self.com1_group.remove(sprite)
                     self.player[1].remove(temp)
                     self.set_last(self.lastcard1, (0, 0))
-                    self.waste_card.append(temp)
+                    self.ground_stack.append(temp)
                     t_card = render.Card(temp, (430, 300))
                     self.ground.add(t_card)
                     self.card_skill(t_card)
@@ -406,12 +402,14 @@ class engine():
                                 temp.move(sprite.getposition())
                             sprite.setposition(430, 300)
                             self.put_ground(sprite)
+                            self.printWindow()
                             self.card_skill(sprite)
                             self.now_turn = self.next_turn()  # Move to next turn
                             break
                     for sprite in self.deck_pile:
                         if sprite.get_rect().collidepoint(mouse_pos):
                             self.pop_from_deck(self.now_turn)
+                            self.printWindow()
                             self.now_turn = self.next_turn()  # Move to next turn
                             break
 
