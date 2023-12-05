@@ -11,29 +11,29 @@ class UnoGame:
         self.screen_width, self.screen_height = SCREEN_WIDTH, SCREEN_HEIGHT
         self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
         self.render_background('./assets/background.png')
-        self.playing = 3
+        self.playing = 3 #this is locked at 3 because otherwise the reverse card would just be skip
         self.clock = pygame.time.Clock()
         self.font = FONT_NAME
 
-    def render_background(self, path):
+    def render_background(self, path): #pygame refreshing is constant time
         self.background = pygame.image.load(path)
         self.screen.fill(BACKGROUND_COLOR)
         self.screen.blit(self.background, (-30, -30))
         pygame.display.update()
 
-    def render_text(self, message, size, color, y_pos):
+    def render_text(self, message, size, color, y_pos): #pygame render is constant time here also
         font = pygame.font.SysFont(FONT_NAME, size)
         text = font.render(message, True, color)
         rect = text.get_rect(center=(SCREEN_WIDTH / 2, y_pos))
         self.screen.blit(text, rect)
         return rect
 
-    def text_handle(self, message, textFont, textSize, textColor):
+    def text_handle(self, message, textFont, textSize, textColor): #constant time
         newFont = pygame.font.SysFont(textFont, textSize)
         newText = newFont.render(message, K_0, textColor)
         return newText
 
-    def menu_logic(self, options, action_functions):
+    def menu_logic(self, options, action_functions): #O(N) because we have to iterate through every option we have on the menu
         while True:
             mouse_pos = pygame.mouse.get_pos()
             mouse_clicked = pygame.mouse.get_pressed()[0]
@@ -58,10 +58,9 @@ class UnoGame:
             self.clock.tick(FPS)
 
     def start_game(self):
-        # Logic to start the game
         self.render_background('assets/default.png')
         game = engine.engine(self.playing)
-        game.start_game()
+        game.start()
 
 
     def main_menu(self):
