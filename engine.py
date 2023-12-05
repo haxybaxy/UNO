@@ -78,21 +78,16 @@ class engine():
             else:
                 setattr(self, f'cpu{i}_card', temp_hand)
 
-    def setup_window(self):#sets up the stage first
+    def setup_window(self): #O(n) as we have to iterate through the players, method sets up the initial window
         self.distribute_cards()
         self.create_deck()
         self.create_player_hands()
 
         booting = True
         while booting:
-            for event in pygame.event.get():
-                if event.type == QUIT:
-                    pygame.quit()
-                    sys.exit()
-
             player_configs = [
-                (self.user_hand, (200, 500), 70, '0',0),
-                (self.cpu1_card, (270, 100), 40, '1',0),
+                (self.user_hand, (200, 500), 70, '0', 0),
+                (self.cpu1_card, (270, 100), 40, '1', 0),
                 (self.cpu2_card, (45, 100), 70, '2', 1),
             ]
 
@@ -114,8 +109,8 @@ class engine():
                 is_positioned(self.cpu2_group, (45, 100), 70, len(self.cpu2_card), axis=1),
             ])
             pygame.display.update()
-    def check_card(self, sprite):
-        if len(self.ground_stack) == 0:
+    def check_card(self, sprite): #O(1) since we are not iterating, only checking values in the card.
+        if len(self.ground_stack) == 0: #This method checks the car on the ground (top of stack)
             return True
         else:
             name = sprite.get_name()
@@ -134,23 +129,23 @@ class engine():
 
         return False
 
-    def skill_handle(self, sprite):
-        name = sprite.get_name().split('_')
+    def special_handle(self, sprite): #O(1) since we are also just checking values of a card
+        name = sprite.get_name().split('_') #This method helps check the card if its a special one
         if name[1] == 'SKILL':
-            if name[2] == '0':
+            if name[2] == '0':#Skip card
                 pygame.time.wait(500)
                 self.now_turn = self.next_turn()
-            elif name[2] == '1':  # Reverse card
-                self.reverse_direction()  # Reverse the play direction
+            elif name[2] == '1':  # Reverse skill
+                self.reverse_direction()  # Reverse the play direction, which the direction we add to our queue
                 pygame.time.wait(500)
-                self.now_turn = self.next_turn()  # Move to next turn
+                self.now_turn = self.next_turn() #moving in the opposite direction
             elif name[2] == '2':
                 pygame.time.wait(500)
-                self.give_card(2)
+                self.give_card(2) #draw 2 card
                 self.now_turn = self.next_turn()
             elif name[2] == '3':
                 if self.now_turn == 0:
-                    self.wild_card()
+                    self.wild_card() #wild card
                 elif self.now_turn == 1:
                     pygame.time.wait(500)
                     self.most_repeated_color(self.player[1])
@@ -158,7 +153,7 @@ class engine():
                     pygame.time.wait(500)
                     self.most_repeated_color(self.player[2])
             elif name[2] == '4':
-                self.give_card(4)
+                self.give_card(4) #draw 4 card
                 if self.now_turn == 0:
                     self.wild_card()
                 elif self.now_turn == 1:
@@ -169,8 +164,8 @@ class engine():
                     self.most_repeated_color(self.player[2])
         return True
 
-    def most_repeated_color(self, card_deck): #move to cpu soon
-        color_counts = {'RED': 0, 'YELLOW': 0, 'GREEN': 0, 'BLUE': 0}
+    def most_repeated_color(self, card_deck): #O(n), we are iterating through every card
+        color_counts = {'RED': 0, 'YELLOW': 0, 'GREEN': 0, 'BLUE': 0} #this method checks which color teh cpu has most in the deck so it can play wen a wild card is played
 
         for item in card_deck:
             color = item.split('_')[0]
@@ -182,7 +177,7 @@ class engine():
         self.ground_stack.append(most_common_color)
         self.ground_graphic.add(temp)
 
-    def wild_card(self):
+    def wild_card(self): #O(1), this just renders the popup screen to choose a color
         color_popup = render.Popup('pickcolor', (400, 300))
         popup_group = pygame.sprite.RenderPlain(color_popup)
         red = render.Popup('RED', (306, 320))
@@ -213,7 +208,7 @@ class engine():
                             loop = False
         return 0
 
-    def pop_from_deck(self, now_turn):
+    def pop_from_deck(self, now_turn): #O(1), popping from a stack)
         item = self.deck_stack.pop(0)
 
         if now_turn == 0:
@@ -231,7 +226,7 @@ class engine():
             self.user_hand.add(temp)
 
         elif now_turn == 1:
-            # Logic for CPU1
+            # graphics and logic for cpu1
             temp = render.Card('BACK', (350, 300))
             temp.rotation(180)
             current_pos = self.lastcard1
@@ -247,15 +242,13 @@ class engine():
             self.player[1].append(item)
 
         elif now_turn == 2:
-            # Logic for CPU2
+            # graphics and logic for cpu1
             temp = render.Card('BACK', (350, 300))
-            # Adjust rotation and positioning as needed for CPU2
-            temp.rotation(270)  # Example rotation; change as needed
+            temp.rotation(270)
             current_pos = self.lastcard2
 
-            # Define x, y positioning based on your game's layout for CPU2
-            if current_pos[1] >= 410:  # Example condition; adjust as needed
-                x, y = current_pos[0] + 40, 170  # Update these coordinates as per your layout
+            if current_pos[1] >= 410:
+                x, y = current_pos[0] + 40, 170
             else:
                 x, y = current_pos[0], current_pos[1] + 40
 
@@ -264,11 +257,10 @@ class engine():
             self.cpu2_group.add(temp)
             self.player[2].append(item)
 
-    def set_last(self, lastcard, compare_pos):
+    def set_last(self, lastcard, compare_pos): #O(1) time, just graphics to render where to put one card
         x, y = lastcard
         i_x, i_y = compare_pos
         if self.now_turn == 0:
-            # User's turn
             if x >= i_x + 60 and y == i_y:
                 x -= 70
             elif y > i_y:
@@ -278,7 +270,6 @@ class engine():
                     x -= 70
             self.lastcard0 = (x, y)
         elif self.now_turn == 1:
-            # CPU1's turn
             if y > 100 and x == 270:
                 x, y = 510, y - 40
             else:
@@ -291,30 +282,27 @@ class engine():
                 y -= 40
             self.lastcard2 = (x, y)
 
-    def put_ground(self, sprite):
+    def put_ground(self, sprite): #O(1), pushing to stack
         self.ground_graphic.add(sprite)
         self.ground_stack.append(sprite.get_name())
         self.set_last(self.lastcard0, sprite.getposition())
 
-    def next_turn(self):
-        # Update player info to include the third player
+    def next_turn(self): #O(n) since we have to iterate through the players
         player_info = {
             0: ("ME", (165, 420)),
             1: ("CPU1", (235, 18)),
-            2: ("CPU2", (45, 30))  # Example position for CPU2; adjust as needed
+            2: ("CPU2", (45, 30))
         }
         current_player = self.players_queue[0]
 
-        # Display player info
         for player, (name, position) in player_info.items():
             if player == current_player:
-                color = (255, 255, 255)  # Highlight color for the current player
+                color = (255, 255, 255)
             else:
-                color = (255, 255, 0)  # Normal color for other players
+                color = (255, 255, 0)
             text = render.text_handle(name, FONT_NAME, 30, color)
             self.screen.blit(text, position)
 
-        # Move to the next player
         if not self.is_reverse:
             self.players_queue.rotate(-1)
         else:
@@ -322,26 +310,22 @@ class engine():
 
         return self.players_queue[0]
 
-    def reverse_direction(self):
-        # Toggle the direction of play
+    def reverse_direction(self): #O(1) time
         self.is_reverse = not self.is_reverse
 
-    def give_card(self, card_num):
-        # Get the next player in the queue without changing the turn order
+    def give_card(self, card_num): #O(n) because popping is O(1) and we are doing it n times
         next_player = self.players_queue[1] if len(self.players_queue) > 1 else self.players_queue[0]
-
-        # Give cards to the next player
         for i in range(card_num):
             self.pop_from_deck(next_player)
         self.print_window()
 
-    def print_window(self):
+    def print_window(self): #O(n) everything in here is O(1) except teh fact that we have to iterate through the amount of players.
         # Blit the background
         self.screen.blit(self.background, (-100, -70))
-        # Draw the deck, user, and computer groups
+        # Draw the deck, user, and computer hands
         self.deck_graphic.draw(self.screen)
 
-        # Player information: name, group, and position
+        #Player information: name, hands, and position
         player_info = {
             0: ("ME", self.user_hand, (165, 420)),
             1: ("CPU", self.cpu1_group, (235, 18)),
@@ -359,16 +343,15 @@ class engine():
         # Update the display
         pygame.display.update()
 
-    # driver function
-    def start(self):
+    def start(self): #O(n), since O(n) + O(n) is still O(n)
         self.deck_stack.clear()
         self.player = [[0] for i in range(0, self.playernum)]
         self.ground_graphic = pygame.sprite.RenderPlain()
-        self.setup_window()
-        self.print_window()
+        self.setup_window() #O(n)
+        self.print_window() #O(n)
         self.driver()
 
-    def driver(self):
+    def driver(self): #O(n^2) since we are iterating through every sprite
         while True:
             # Check for winning conditions for all players
             if len(self.user_hand) == 0 or any(len(self.player[i]) == 0 for i in range(1, self.playernum)):
@@ -379,7 +362,7 @@ class engine():
             if len(self.deck_stack) == 0:
                 self.set_deck()
 
-            # Handle AI's turn for CPU1 and CPU2
+            # Handle turns for cpus
             if self.now_turn in [1, 2]:
                 pygame.time.wait(700)
                 ai = CPU.AI(self.now_turn, self.player[self.now_turn], self.ground_stack)
@@ -389,7 +372,7 @@ class engine():
                     self.pop_from_deck(self.now_turn)
                     self.print_window()
                 else:
-                    current_group = self.cpu1_group if self.now_turn == 1 else self.cpu2_group
+                    current_group = self.cpu1_group if self.now_turn == 1 else self.cpu2_group #
                     last_card_pos = self.lastcard1 if self.now_turn == 1 else self.lastcard2
 
                     for sprite in current_group:
@@ -400,14 +383,14 @@ class engine():
                     self.ground_stack.append(temp)
                     t_card = render.Card(temp, (430, 300))
                     self.ground_graphic.add(t_card)
-                    self.skill_handle(t_card)
+                    self.special_handle(t_card)
 
                 self.print_window()
                 self.now_turn = self.next_turn()  # Move to next turn
                 pygame.display.update()
 
-            # Event handling
-            for event in pygame.event.get():
+            # Event listener
+            for event in pygame.event.get(): #Event listener loop is O(1), but the whole thing here is O(n^2)
                 if event.type == QUIT:
                     pygame.quit()
                     sys.exit()
@@ -415,7 +398,7 @@ class engine():
                     return
                 if event.type == MOUSEBUTTONUP and self.now_turn == 0:
                     mouse_pos = pygame.mouse.get_pos()
-                    for sprite in self.user_hand:
+                    for sprite in self.user_hand: #O(n^2) because for every sprite we are iterating through the values in temp
                         if sprite.get_rect().collidepoint(mouse_pos) and self.check_card(sprite):
                             self.user_hand.remove(sprite)
                             for temp in self.user_hand:
@@ -423,10 +406,10 @@ class engine():
                             sprite.setposition(430, 300)
                             self.put_ground(sprite)
                             self.print_window()
-                            self.skill_handle(sprite)
+                            self.special_handle(sprite)
                             self.now_turn = self.next_turn()  # Move to next turn
                             break
-                    for sprite in self.deck_graphic:
+                    for sprite in self.deck_graphic: #O(n)
                         if sprite.get_rect().collidepoint(mouse_pos):
                             self.pop_from_deck(self.now_turn)
                             self.print_window()
@@ -435,31 +418,30 @@ class engine():
 
             pygame.display.update()
 
-    def win_loss(self):
+    def win_loss(self): #O(1) time since this is just rendering and the loop is an event listener
         pygame.draw.rect(self.screen, (173, 216, 230), pygame.Rect(200, 200, 400, 200))
         pygame.draw.rect(self.screen, (191, 239, 255), pygame.Rect(210, 210, 380, 180))
 
-        if len(self.user_hand) == 0:
-            verdict = text_handle("You win!", FONT_NAME, 80, (0, 0, 139))
-            press_text = text_handle("Press SPACE to REPLAY", FONT_NAME, 35, (0, 0, 139))
-            self.screen.blit(verdict, (230, 220))
+        message_color = (0, 0, 139)
+        replay_text = text_handle("Press SPACE to REPLAY", FONT_NAME, 35, message_color)
+
+        if not self.user_hand:
+            result_text = "You win!"
+            text_position = (230, 220)
         else:
-            verdict = text_handle("You lost...", FONT_NAME, 80, (0, 0, 139))
-            press_text = text_handle("Press SPACE to REPLAY", FONT_NAME, 35, (0, 0, 139))
-            self.screen.blit(verdict, (212, 220))
+            result_text = "You lost..."
+            text_position = (212, 220)
 
+        result_message = text_handle(result_text, FONT_NAME, 80, message_color)
+        self.screen.blit(result_message, text_position)
+        self.screen.blit(replay_text, (228, 330))
         pygame.display.update()
 
-        self.screen.blit(press_text, (228, 330))
-        pygame.display.update()
         while True:
             for event in pygame.event.get():
                 if event.type == QUIT:
                     pygame.quit()
                     sys.exit()
-
-                if event.type == KEYDOWN:
-                    if event.key == K_SPACE:
-                        self.start()
-                        return
-        return 0
+                elif event.type == KEYDOWN and event.key == K_SPACE:
+                    self.start()
+                    return
