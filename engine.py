@@ -267,9 +267,12 @@ class engine():
             # Add more player info if more than 2 players
         }
         current_player = self.players_queue[0]
-        if current_player in player_info:
-            player_name, position = player_info[current_player]
-            text = render.text_handle(player_name, FONT_NAME, 30, (255, 242, 0))
+        for player, (name, position) in player_info.items():
+            if player == current_player:
+                color = (255, 255, 255)  # Highlight color for the current player
+            else:
+                color = (255, 255, 0)  # Normal color for other players
+            text = render.text_handle(name, FONT_NAME, 30, color)
             self.screen.blit(text, position)
 
         # Move to the next player
@@ -320,25 +323,6 @@ class engine():
         # Update the display
         pygame.display.update()
 
-    def render_player_names(self):
-        player_info = {
-            0: ("ME", (165, 420)),
-            1: ("CPU", (235, 18)),
-            # Add more player info if more than 2 players
-        }
-
-        current_player = self.players_queue[0]
-
-        for player, (name, position) in player_info.items():
-            if player == current_player:
-                color = (255, 242, 0)  # Highlight color for the current player
-            else:
-                color = (255, 255, 255)  # Normal color for other players
-
-
-            text = render.text_handle(name, FONT_NAME, 30, color)
-            self.screen.blit(text, position)
-
     # driver function
     def startGame(self):
         self.deck_stack.clear()
@@ -359,8 +343,6 @@ class engine():
             # Replenish the deck if empty
             if len(self.deck_stack) == 0:
                 self.set_deck()
-
-            # self.render_player_names()
 
             # AI's turn
             if self.now_turn == 1:
