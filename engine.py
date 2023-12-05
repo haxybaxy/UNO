@@ -103,58 +103,6 @@ class engine():
             self.printWindow()
             pygame.display.update()
 
-    def next_turn(self):
-        # Display player info if needed
-        player_info = {
-            0: ("ME", (165, 420)),
-            1: ("CPU", (235, 18)),
-            # Add more player info if more than 2 players
-        }
-        current_player = self.players_queue[0]
-        if current_player in player_info:
-            player_name, position = player_info[current_player]
-            text = render.text_handle(player_name, FONT_NAME, 30, (0, 0, 0))
-            self.screen.blit(text, position)
-
-        # Move to the next player
-        if not self.is_reverse:
-            self.players_queue.rotate(-1)
-        else:
-            self.players_queue.rotate(1)
-
-        return self.players_queue[0]
-
-    def reverse_direction(self):
-        # Toggle the direction of play
-        self.is_reverse = not self.is_reverse
-
-    def printWindow(self):
-        # Blit the background
-        self.screen.blit(self.background, (-100, -70))
-
-        # Draw the deck, user, and computer groups
-        self.deck_group.draw(self.screen)
-        self.user_group.draw(self.screen)
-        self.com1_group.draw(self.screen)
-
-        # Player information: name, group, and position
-        player_info = {
-            0: ("ME", self.user_group, (165, 420)),
-            1: ("CPU", self.com1_group, (235, 18)),
-        }
-
-        for player, (name, group, position) in player_info.items():
-            if group:  # Draw only if the group exists
-                group.draw(self.screen)
-                text = text_handle(name, FONT_NAME, 30, (0, 0, 0))
-                self.screen.blit(text, position)
-
-        # Draw the ground group
-        self.ground.draw(self.screen)
-
-        # Update the display
-        pygame.display.update()
-
     def check_card(self, sprite):
         if len(self.waste_card) == 0:
             return True
@@ -204,6 +152,7 @@ class engine():
                     self.most_num_color(self.player[1])
         return True
 
+
     def most_num_color(self, card_deck):
         color_counts = {'RED': 0, 'YELLOW': 0, 'GREEN': 0, 'BLUE': 0}
 
@@ -249,15 +198,6 @@ class engine():
                             loop = False
         return 0
 
-    def give_card(self, card_num):
-        # Get the next player in the queue without changing the turn order
-        next_player = self.players_queue[1] if len(self.players_queue) > 1 else self.players_queue[0]
-
-        # Give cards to the next player
-        for i in range(card_num):
-            self.pop_from_deck(next_player)
-        self.printWindow()
-
     def pop_from_deck(self, now_turn):
         item = self.deck.pop(0)
 
@@ -291,24 +231,6 @@ class engine():
             self.player[1].append(item)
             self.printWindow()
 
-    def render_player_names(self):
-        player_info = {
-            0: ("ME", (165, 420)),
-            1: ("CPU", (235, 18)),
-            # Add more player info if more than 2 players
-        }
-
-        current_player = self.players_queue[0]
-
-        for player, (name, position) in player_info.items():
-            if player == current_player:
-                color = (255, 242, 0)  # Highlight color for the current player
-            else:
-                color = (255, 255, 255)  # Normal color for other players
-
-            text = render.text_handle(name, FONT_NAME, 30, color)
-            self.screen.blit(text, position)
-
     def set_last(self, lastcard, compare_pos):
         x, y = lastcard
         i_x, i_y = compare_pos
@@ -337,6 +259,86 @@ class engine():
         self.waste_card.append(sprite.get_name())
         self.set_last(self.lastcard0, sprite.getposition())
         self.printWindow()
+
+    def next_turn(self):
+        # Display player info if needed
+        player_info = {
+            0: ("ME", (165, 420)),
+            1: ("CPU", (235, 18)),
+            # Add more player info if more than 2 players
+        }
+        current_player = self.players_queue[0]
+        if current_player in player_info:
+            player_name, position = player_info[current_player]
+            text = render.text_handle(player_name, FONT_NAME, 30, (0, 0, 0))
+            self.screen.blit(text, position)
+
+        # Move to the next player
+        if not self.is_reverse:
+            self.players_queue.rotate(-1)
+        else:
+            self.players_queue.rotate(1)
+
+        return self.players_queue[0]
+
+    def reverse_direction(self):
+        # Toggle the direction of play
+        self.is_reverse = not self.is_reverse
+
+    def give_card(self, card_num):
+        # Get the next player in the queue without changing the turn order
+        next_player = self.players_queue[1] if len(self.players_queue) > 1 else self.players_queue[0]
+
+        # Give cards to the next player
+        for i in range(card_num):
+            self.pop_from_deck(next_player)
+        self.printWindow()
+
+    def printWindow(self):
+        # Blit the background
+        self.screen.blit(self.background, (-100, -70))
+
+        # Draw the deck, user, and computer groups
+        self.deck_group.draw(self.screen)
+        self.user_group.draw(self.screen)
+        self.com1_group.draw(self.screen)
+
+        # Player information: name, group, and position
+        player_info = {
+            0: ("ME", self.user_group, (165, 420)),
+            1: ("CPU", self.com1_group, (235, 18)),
+        }
+
+        for player, (name, group, position) in player_info.items():
+            if group:  # Draw only if the group exists
+                group.draw(self.screen)
+                text = text_handle(name, FONT_NAME, 30, (0, 0, 0))
+                self.screen.blit(text, position)
+
+        # Draw the ground group
+        self.ground.draw(self.screen)
+
+        # Update the display
+        pygame.display.update()
+
+
+    def render_player_names(self):
+        player_info = {
+            0: ("ME", (165, 420)),
+            1: ("CPU", (235, 18)),
+            # Add more player info if more than 2 players
+        }
+
+        current_player = self.players_queue[0]
+
+        for player, (name, position) in player_info.items():
+            if player == current_player:
+                color = (255, 242, 0)  # Highlight color for the current player
+            else:
+                color = (255, 255, 255)  # Normal color for other players
+
+            text = render.text_handle(name, FONT_NAME, 30, color)
+            self.screen.blit(text, position)
 
     # driver function
     def startGame(self):
