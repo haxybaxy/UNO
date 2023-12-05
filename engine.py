@@ -343,15 +343,15 @@ class engine():
         # Update the display
         pygame.display.update()
 
-    def start(self): #O(n), since O(n) + O(n) is still O(n)
+    def start(self): #O(n^2), since O(n^2) + O(n) is still O(n)
         self.deck_stack.clear()
         self.player = [[0] for i in range(0, self.playernum)]
         self.ground_graphic = pygame.sprite.RenderPlain()
         self.setup_window() #O(n)
         self.print_window() #O(n)
-        self.driver()
+        self.driver() #O(n^2)
 
-    def driver(self): #O(n^2) since we are iterating through every sprite
+    def driver(self): #O(n^2) worst case since we are iterating through every sprite each time we go through one
         while True:
             # Check for winning conditions for all players
             if len(self.user_hand) == 0 or any(len(self.player[i]) == 0 for i in range(1, self.playernum)):
