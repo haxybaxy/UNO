@@ -61,7 +61,7 @@ class UnoGame:
         # Logic to start the game
         self.render_background('assets/default.png')
         game = engine.engine(self.playing)
-        game.startGame()
+        game.start_game()
 
 
     def main_menu(self):
