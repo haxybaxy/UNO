@@ -29,6 +29,18 @@ class engine():
         self.is_reverse = False
         pygame.display.update()
 
+    def sort_player_hand(self, player_index): # O(nlogn) since we are using timsort which is the default sorting algotithm in python
+        # Define the sorting key based on colors
+        def sort_key(card_name):
+            color = card_name.split('_')[0]
+            # Use the index of the color in the colors dict as the sort key
+            for color_idx, color_name in self.colors.items():
+                if color == color_name:
+                    return color_idx
+            return 5  # Assign a higher number for black or any unknown color
+
+        # Sort the player's hand using the defined key
+        self.player[player_index].sort(key=sort_key)
     def set_deck(self): #Method for making the cards, runtime is O(n), since we are iterating through every card
         predefined_deck = []  # The cards are an array while you shuffle them
 
@@ -55,6 +67,7 @@ class engine():
         self.set_deck()
         for player in range(self.playernum):
             self.player[player] = [self.deck_stack.pop() for _ in range(7)]
+            self.sort_player_hand(player) #O(nlogn) isnt larger than the linear time complexity
 
     def create_deck(self): #O(1) Renders take a constant amount of time always
         deck = render.Card('BACK', (350, 300))
@@ -224,6 +237,7 @@ class engine():
             temp.setposition(x, y)
             self.lastcard0 = (x, y)
             self.user_hand.add(temp)
+
 
         elif now_turn == 1:
             # graphics and logic for cpu1
