@@ -1,5 +1,5 @@
 import pygame
-
+from pygame.locals import *
 class BaseSprite(pygame.sprite.Sprite):
     """ A base class for common sprite functionalities. """
     def __init__(self, name, position, image_scale=None):
@@ -83,3 +83,8 @@ class Card(BaseSprite):
 class Popup(BaseSprite):
     def __init__(self, name, position):
         super().__init__(name, position)
+
+def text_handle(message, textFont, textSize, textColor):
+    newFont = pygame.font.SysFont(textFont, textSize)
+    newText = newFont.render(message, K_0, textColor)
+    return newText

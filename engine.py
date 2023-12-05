@@ -6,6 +6,7 @@ import render
 import CPU
 from config import SCREEN_WIDTH, SCREEN_HEIGHT, FONT_NAME
 from handlers import text_handle, position_cards, is_positioned
+from collections import deque
 
 
 class engine():
@@ -25,6 +26,8 @@ class engine():
         self.rotate = 0
         self.now_turn = 0
         self.waste_card = []
+        self.players_queue = deque(range(playernum))
+        self.is_reverse = False
         pygame.display.update()
 
     def set_deck(self):
@@ -73,43 +76,30 @@ class engine():
 
     # driver function
 
-    def next_turn(self, now_turn):
+    def next_turn(self):
+        # Display player info if needed
         player_info = {
             0: ("ME", (165, 420)),
             1: ("CPU", (235, 18)),
+            # Add more player info if more than 2 players
         }
-
-        if now_turn in player_info:
-            player_name, position = player_info[now_turn]
-            text = text_handle(player_name, FONT_NAME, 30, (0, 0, 0))
+        current_player = self.players_queue[0]
+        if current_player in player_info:
+            player_name, position = player_info[current_player]
+            text = render.text_handle(player_name, FONT_NAME, 30, (0, 0, 0))
             self.screen.blit(text, position)
 
-        return self.get_next_player(now_turn)
-
-    def get_next_player(self, now_turn):
-        if self.rotate == 0 and now_turn + 1 == self.playernum:
-            return 0
-        elif self.rotate == 1 and now_turn - 1 < 0:
-            return self.playernum - 1
+        # Move to the next player
+        if not self.is_reverse:
+            self.players_queue.rotate(-1)
         else:
-            if self.rotate == 0:
-                return now_turn + 1
-            elif self.rotate == 1:
-                return now_turn - 1
-        return 0
+            self.players_queue.rotate(1)
 
-    def select_player(self, now_turn):
-        player_info = {
-            0: ("ME", (165, 420)),
-            1: ("CPU", (235, 18)),
-        }
+        return self.players_queue[0]
 
-        if now_turn in player_info:
-            player_name, position = player_info[now_turn]
-            text = text_handle(player_name, FONT_NAME, 30, (255, 242, 0))
-            self.screen.blit(text, position)
-
-        pygame.display.update()
+    def reverse_direction(self):
+        # Toggle the direction of play
+        self.is_reverse = not self.is_reverse
 
     def printWindow(self):
         # Blit the background
@@ -159,25 +149,19 @@ class engine():
         return False
 
     def card_skill(self, sprite):
-        name = sprite.get_name()
-        name = name.split('_')
+        name = sprite.get_name().split('_')
         if name[1] == 'SKILL':
             if name[2] == '0':
                 pygame.time.wait(500)
-                self.now_turn = self.next_turn(self.now_turn)
-            elif name[2] == '1':
-                if self.playernum == 2:
-                    pygame.time.wait(500)
-                    self.now_turn = self.next_turn(self.now_turn)
-                else:
-                    if self.rotate == 0:
-                        self.rotate = 1
-                    else:
-                        self.rotate = 0
+                self.now_turn = self.next_turn()
+            elif name[2] == '1':  # Reverse card
+                self.reverse_direction()  # Reverse the play direction
+                pygame.time.wait(500)
+                self.now_turn = self.next_turn()  # Move to next turn
             elif name[2] == '2':
                 pygame.time.wait(500)
                 self.give_card(2)
-                self.now_turn = self.next_turn(self.now_turn)
+                self.now_turn = self.next_turn()
             elif name[2] == '3':
                 if self.now_turn == 0:
                     self.pick_color()
@@ -239,9 +223,12 @@ class engine():
         return 0
 
     def give_card(self, card_num):
-        dest_player = self.get_next_player(self.now_turn)
-        for i in range(0, card_num):
-            self.pop_from_deck(dest_player)
+        # Get the next player in the queue without changing the turn order
+        next_player = self.players_queue[1] if len(self.players_queue) > 1 else self.players_queue[0]
+
+        # Give cards to the next player
+        for i in range(card_num):
+            self.pop_from_deck(next_player)
 
     def pop_from_deck(self, now_turn):
         item = self.deck.pop(0)
@@ -273,6 +260,24 @@ class engine():
             self.lastcard1 = (x, y)
             self.com1_group.add(temp)
             self.player[1].append(item)
+
+    def render_player_names(self):
+        player_info = {
+            0: ("ME", (165, 420)),
+            1: ("CPU", (235, 18)),
+            # Add more player info if more than 2 players
+        }
+
+        current_player = self.players_queue[0]
+
+        for player, (name, position) in player_info.items():
+            if player == current_player:
+                color = (255, 242, 0)  # Highlight color for the current player
+            else:
+                color = (255, 255, 255)  # Normal color for other players
+
+            text = render.text_handle(name, FONT_NAME, 30, color)
+            self.screen.blit(text, position)
 
     def set_last(self, lastcard, compare_pos):
         x, y = lastcard
@@ -344,29 +349,26 @@ class engine():
     # driver function
     def playGame(self):
         while True:
-            if len(self.user_group) == 0:
+            # Check for winning conditions
+            if len(self.user_group) == 0 or (self.playernum == 2 and len(self.player[1]) == 0):
                 self.restart()
                 return
-            elif self.playernum == 2:
-                if len(self.player[1]) == 0:
-                    self.restart()
-                    return
+
+            # Replenish the deck if empty
             if len(self.deck) == 0:
                 self.set_deck()
 
-            self.select_player(self.now_turn)
+            self.render_player_names()
+
+            # AI's turn
             if self.now_turn == 1:
-                self.select_player(self.now_turn)
                 pygame.time.wait(700)
                 ai = CPU.AI(2, self.player[1], self.waste_card)
                 temp = ai.cpuplay()
-                if temp == 0 or temp == None:
+
+                if temp == 0 or temp is None:
                     self.pop_from_deck(1)
-                    self.printWindow()
-                    self.now_turn = self.next_turn(self.now_turn)
-                    pygame.display.update()
                 else:
-                    pygame.init()
                     for sprite in self.com1_group:
                         if sprite.getposition() == self.lastcard1:
                             self.com1_group.remove(sprite)
@@ -375,56 +377,55 @@ class engine():
                     self.waste_card.append(temp)
                     t_card = render.Card(temp, (430, 300))
                     self.ground.add(t_card)
-                    self.printWindow()
-                    pygame.display.update()
                     self.card_skill(t_card)
-                    self.printWindow()
-                    self.now_turn = self.next_turn(self.now_turn)
-                    pygame.display.update()
 
+                self.printWindow()
+                self.now_turn = self.next_turn()  # Move to next turn
+                pygame.display.update()
+
+            # Event handling
             for event in pygame.event.get():
                 if event.type == QUIT:
                     pygame.quit()
                     sys.exit()
+                if event.type == KEYDOWN and event.key == K_ESCAPE:
+                    return
+                if event.type == MOUSEBUTTONUP and self.now_turn == 0:
+                    mouse_pos = pygame.mouse.get_pos()
+                    for sprite in self.user_group:
+                        if sprite.get_rect().collidepoint(mouse_pos) and self.check_card(sprite):
+                            self.user_group.remove(sprite)
+                            for temp in self.user_group:
+                                temp.move(sprite.getposition())
+                            sprite.setposition(430, 300)
+                            self.put_ground(sprite)
+                            self.card_skill(sprite)
+                            self.now_turn = self.next_turn()  # Move to next turn
+                            break
+                    for sprite in self.deck_group:
+                        if sprite.get_rect().collidepoint(mouse_pos):
+                            self.pop_from_deck(self.now_turn)
+                            self.now_turn = self.next_turn()  # Move to next turn
+                            break
 
-                if event.type == KEYDOWN:
-                    if event.key == K_ESCAPE:
-                        return
-
-                if event.type == MOUSEBUTTONUP:
-                    if self.now_turn == 0:
-                        self.select_player(self.now_turn)
-                        mouse_pos = pygame.mouse.get_pos()
-                        for sprite in self.user_group:
-                            if sprite.get_rect().collidepoint(mouse_pos):
-                                if self.check_card(sprite):
-                                    self.user_group.remove(sprite)
-                                    for temp in self.user_group:
-                                        temp.move(sprite.getposition())
-                                    sprite.setposition(430, 300)
-                                    self.put_ground(sprite)
-                                    self.card_skill(sprite)
-                                    self.now_turn = self.next_turn(self.now_turn)
-                                    break
-                        for sprite in self.deck_group:
-                            if sprite.get_rect().collidepoint(mouse_pos):
-                                self.pop_from_deck(self.now_turn)
-                                self.now_turn = self.next_turn(self.now_turn)
-                                break
             pygame.display.update()
 
     def restart(self):
-        pygame.draw.rect(self.screen, (255, 51, 0), pygame.Rect(200, 200, 400, 200))
-        pygame.draw.rect(self.screen, (255, 180, 0), pygame.Rect(210, 210, 380, 180))
+        # Light blue outer rectangle
+        pygame.draw.rect(self.screen, (173, 216, 230), pygame.Rect(200, 200, 400, 200))
+        # Slightly lighter inner rectangle for contrast
+        pygame.draw.rect(self.screen, (191, 239, 255), pygame.Rect(210, 210, 380, 180))
 
         if len(self.user_group) == 0:
-            close_text = text_handle("YOU WIN!", FONT_NAME, 80, (135, 206, 250))  # Lighter blue color
-            press_text = text_handle("Press SPACE to REPLAY", FONT_NAME, 35, (135, 206, 250))  # Lighter blue color
+            close_text = text_handle("You win!", FONT_NAME, 80, (0, 0, 139))  # Dark blue color
+            press_text = text_handle("Press SPACE to REPLAY", FONT_NAME, 35, (0, 0, 139))  # Dark blue color
             self.screen.blit(close_text, (230, 220))
         else:
-            close_text = text_handle("YOU LOSE!", FONT_NAME, 80, (135, 206, 250))  # Lighter blue color
-            press_text = text_handle("Press SPACE to REPLAY", FONT_NAME, 35, (135, 206, 250))  # Lighter blue color
+            close_text = text_handle("You lost...", FONT_NAME, 80, (0, 0, 139))  # Dark blue color
+            press_text = text_handle("Press SPACE to REPLAY", FONT_NAME, 35, (0, 0, 139))  # Dark blue color
             self.screen.blit(close_text, (212, 220))
+
+        pygame.display.update()
 
         self.screen.blit(press_text, (228, 330))
         pygame.display.update()
